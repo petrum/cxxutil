@@ -21,7 +21,7 @@ ScopeExit<F> MakeScopeExit(F f)
 
 #define STRING_JOIN2(arg1, arg2) DO_STRING_JOIN2(arg1, arg2)
 #define DO_STRING_JOIN2(arg1, arg2) arg1 ## arg2
-#define SCOPE_EXIT(code) auto STRING_JOIN2(scope_exit_, __LINE__) = MakeScopeExit([=](){code;})
+#define SCOPE_EXIT(code) auto STRING_JOIN2(scope_exit_, __LINE__) = MakeScopeExit([&](){code;})
 
 #endif //__SCOPEEXIT__
 
