@@ -272,7 +272,7 @@ inline ALogMsg::ALogMsg()
         ++ALog::get().lost;
         return;
     }
-    *reinterpret_cast<unsigned long long*>(pData) = rdtsc();
+    *reinterpret_cast<unsigned long long*>(pData) = rdtscp();
     pData += sizeof(unsigned long long);
 }
   
