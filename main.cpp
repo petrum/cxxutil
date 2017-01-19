@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
     FILE_LOG(logINFO) << "Started logging " << NUM << " messages";
     for (std::size_t i = 0; i != NUM; ++i)
     {
-      ALog::get().write("Hellow world!");
+        ALog::get().write("Hellow world!");
     }
     FILE_LOG(logINFO) << "Finishing logging " << NUM << " messages";
     ALogMsg() << "Hello" << "World" << 123 << 3.2;
