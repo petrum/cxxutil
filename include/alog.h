@@ -232,8 +232,7 @@ private:
 
 inline ALogMsg::ALogMsg()
 {
-    pData = ALog::get().pQueue_->getNextWriteBuffer();
-    
+    pData = ALog::get().pQueue_->getNextWriteBuffer();    
 }
   
 inline ALogMsg::~ALogMsg()
