@@ -160,9 +160,10 @@ inline void ALog::init(std::size_t max_row, std::size_t max_col, const std::stri
 
 inline ALog::~ALog()
 {
+  FILE_LOG(logINFO) << "Log::~ALog() enter";
   stop();
   delete pQueue_;
-  FILE_LOG(logINFO) << "Log::~ALog(): written = " << written << ", lost = " << lost << 
+  FILE_LOG(logINFO) << "Log::~ALog() exit: written = " << written << ", lost = " << lost << 
     ", read = " << read << ", logged = " << written + lost;
 }
 
@@ -206,9 +207,11 @@ inline void ALog::consume()
 
 void ALog::stop()
 {
+  FILE_LOG(logINFO) << "ALog::stop() enter";
   stopping_ = true;
   if (consumer_.joinable())
     consumer_.join();
+  FILE_LOG(logINFO) << "ALog::stop() exit";
 }
 
 ALog& ALog::get()
