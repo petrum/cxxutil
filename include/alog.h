@@ -36,8 +36,8 @@ private:
 
 inline std::ostream& operator <<(std::ostream& o, const CircularQueue& q)
 {
-  return o << "CircularQueue(max_row = " << q.max_row_ << ", max_col = " << q.max_col_ << 
-    ", head = " << q.head_ << ", tail = " << q.tail_ << ", tail2 = " << q.tail2_ << ", len = " << q.len_ << ")";
+  return o << "max_row = " << q.max_row_ << ", max_col = " << q.max_col_ << 
+    ", head = " << q.head_ << ", tail = " << q.tail_ << ", tail2 = " << q.tail2_ << ", len = " << q.len_;
 }
 
 inline std::size_t CircularQueue::next(std::size_t i) const
@@ -58,10 +58,10 @@ inline bool CircularQueue::empty() const
 inline CircularQueue::CircularQueue(std::size_t max_row, std::size_t max_col) : 
                      max_row_(max_row), max_col_(max_col), head_(0), tail_(max_col), len_(max_row * max_col), tail2_(next(tail_))
 {
-  FILE_LOG(logINFO) << "CircularQueue::CircularQueue()";
   pData = (char*)malloc(len_);
   //for (std::size_t i = 0; i != len_; ++i)
   //    pData[i] = '?';
+  FILE_LOG(logINFO) << "CircularQueue::CircularQueue(" << *this << ")";
 }
 
 inline CircularQueue::~CircularQueue()
@@ -152,9 +152,9 @@ inline ALog::ALog() : stopping_(false), written(0), lost(0), read(0)
 
 inline void ALog::init(std::size_t max_row, std::size_t max_col, const std::string& fName)
 {
+  FILE_LOG(logINFO) << "ALog::init()";
   pQueue_ = new CircularQueue(max_row, max_col);
   fName_ = fName;
-  FILE_LOG(logINFO) << "ALog::init: " << *pQueue_;
   consumer_ = std::thread(&ALog::consume, this);
 }
 
