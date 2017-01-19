@@ -195,7 +195,8 @@ inline void ALog::consume()
         char* pData = pQueue_->getNextReadBuffer();
         if (pData)
         {
-            FILE_LOG(logDEBUG) << "Consumer read: " << "XXX";//pData;
+            unsigned long long& dt = *reinterpret_cast<unsigned long long*>(pData);
+            FILE_LOG(logINFO) << "Consumer read: " << (void*)pData << ", dt = " << dt;
             ++read;
         }
         if (i % 1000 == 0)
@@ -224,15 +225,31 @@ struct ALogMsg
     ALogMsg(); 
     ~ALogMsg();
     ALogMsg& operator <<(int);
+    ALogMsg& operator <<(unsigned int);
+    ALogMsg& operator <<(long unsigned int i);
     ALogMsg& operator <<(double);
     ALogMsg& operator <<(const char*);
 private:
     char* pData;
 };
 
+inline unsigned long long rdtsc() {
+    unsigned int lo, hi;
+    asm volatile (
+     "rdtsc"
+     : "=a"(lo), "=d"(hi) /* outputs */
+     : "a"(0)             /* inputs */
+     : "%ebx", "%ecx");     /* clobbers*/
+    return ((unsigned long long)lo) | (((unsigned long long)hi) << 32);
+}
+
 inline ALogMsg::ALogMsg()
 {
-    pData = ALog::get().pQueue_->getNextWriteBuffer();    
+    pData = ALog::get().pQueue_->getNextWriteBuffer();
+    *reinterpret_cast<unsigned long long*>(pData) = rdtsc();
+    FILE_LOG(logDEBUG) << "ALogMsg::ALogMsg()1" << (void*)pData;
+    pData += sizeof(unsigned long long);
+    FILE_LOG(logDEBUG) << "ALogMsg::ALogMsg()2" << (void*)pData;
 }
   
 inline ALogMsg::~ALogMsg()
@@ -241,9 +258,27 @@ inline ALogMsg::~ALogMsg()
     ++ALog::get().written;
 }
 
-inline ALogMsg& ALogMsg::operator <<(int)
+inline ALogMsg& ALogMsg::operator <<(int i)
 {
     pData += sizeof(int);
+    return *this;
+}
+
+inline ALogMsg& ALogMsg::operator <<(unsigned int i)
+{
+    *reinterpret_cast<int*>(pData) = 10;
+    pData += sizeof(int);
+    *reinterpret_cast<unsigned int*>(pData) = i;
+    pData += sizeof(unsigned int);
+    return *this;
+}
+
+inline ALogMsg& ALogMsg::operator <<(long unsigned int i)
+{
+    *reinterpret_cast<int*>(pData) = 11;
+    pData += sizeof(int);
+    *reinterpret_cast<long unsigned int*>(pData) = i;
+    pData += sizeof(long unsigned int);
     return *this;
 }
 
