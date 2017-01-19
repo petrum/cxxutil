@@ -14,6 +14,7 @@ int main(int argc, char* argv[])
     STD_FUNCTION_BEGIN;
     SCOPE_EXIT(foo(true));
     ALog::get().init(1000000, 256, "/tmp/test.log");
+    SCOPE_EXIT(ALog::get().stop());
     std::size_t NUM = 10000000;
     FILE_LOG(logINFO) << "Started logging " << NUM << " messages";
     for (std::size_t i = 0; i != NUM; ++i)
@@ -22,7 +23,6 @@ int main(int argc, char* argv[])
     }
     FILE_LOG(logINFO) << "Finishing logging " << NUM << " messages";
     ALogMsg() << "Hello" << "World" << 123 << 3.2;
-    ALog::get().stop();
     FILE_LOG(logINFO) << "Stopped";
     
     ENFORCE(foo(false))("Some issue here passing ")(false);
