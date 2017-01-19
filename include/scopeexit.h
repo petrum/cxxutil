@@ -1,14 +1,14 @@
 /*******************************************************************************
-*                           Author: Petru Marginean                            *
-*                          petru.marginean@gmail.com                           *
-*******************************************************************************/
+ *                           Author: Petru Marginean                            *
+ *                          petru.marginean@gmail.com                           *
+ *******************************************************************************/
 #ifndef __SCOPEEXIT__
 #define __SCOPEEXIT__
 
 template <typename F>
 struct ScopeExit 
 {
-    ScopeExit(F f) : f(f) {}
+ScopeExit(F f) : f(f) {}
     ~ScopeExit() { f(); }
     F f;
 };

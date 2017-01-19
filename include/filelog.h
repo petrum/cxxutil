@@ -1,7 +1,7 @@
 /*******************************************************************************
-*                           Author: Petru Marginean                            *
-*                          petru.marginean@gmail.com                           *
-*******************************************************************************/
+ *                           Author: Petru Marginean                            *
+ *                          petru.marginean@gmail.com                           *
+ *******************************************************************************/
 
 #ifndef __FILELOG_H__
 #define __FILELOG_H__
@@ -12,7 +12,7 @@
 
 class Output2FILE
 {
-public:
+ public:
     static FILE*& Stream();
     static void Output(const std::string& msg);
 };
@@ -34,15 +34,15 @@ class FILELog : public Log<Output2FILE> {};
 #define FILE_LOG(messageLevel) if (Output2FILE::Stream() && messageLevel > FILELog::ReportingLevel()) ; else FILELog()(messageLevel)
 
 #define STD_FUNCTION_BEGIN try {
-#define STD_FUNCTION_END }\
-    catch (const std::exception& e)\
-    {\
-        FILE_LOG(logERROR) << e.what();\
-    }\
-    catch (...)\
-    {\
-        FILE_LOG(logERROR) << "Unknown error";\
-    }
+#define STD_FUNCTION_END }                      \
+        catch (const std::exception& e)         \
+        {                                       \
+            FILE_LOG(logERROR) << e.what();     \
+        }                                       \
+        catch (...)                             \
+        {                                       \
+            FILE_LOG(logERROR) << "Unknown error"; \
+        }
 
 #endif
 

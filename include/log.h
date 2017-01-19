@@ -1,7 +1,7 @@
 /*******************************************************************************
-*                           Author: Petru Marginean                            *
-*                          petru.marginean@gmail.com                           *
-*******************************************************************************/
+ *                           Author: Petru Marginean                            *
+ *                          petru.marginean@gmail.com                           *
+ *******************************************************************************/
 
 #ifndef __LOG_H__
 #define __LOG_H__
@@ -17,16 +17,16 @@ enum TLogLevel {logERROR, logWARNING, logINFO, logDEBUG};
 template <typename T>
 class Log
 {
-public:
+ public:
     Log();
     ~Log();
     std::ostringstream& operator()(TLogLevel level = logINFO);
-public:
+ public:
     static TLogLevel& ReportingLevel();
     static void SetReportingLevel(const std::string& s); 
-protected:
+ protected:
     std::ostringstream os;
-private:
+ private:
     Log(const Log&);
     Log& operator =(const Log&);
     TLogLevel messageLevel;
@@ -63,7 +63,7 @@ inline std::string GetEnv(const char* pName, const char* pDefault)
     ENFORCE(pName);
     char* pRes = getenv(pName);
     ENFORCE(pRes || pDefault)("The environment variable '")(pName)("' is missing; "
-        "please provide a default if you do not want an exception here");
+                                                                   "please provide a default if you do not want an exception here");
     return pRes ? pRes : pDefault;
 }
 
@@ -101,14 +101,14 @@ Log<T>::Log() : messageLevel(logINFO)
 
 inline std::string NowTime()
 { 
-  struct timeval tv;
-  gettimeofday(&tv, 0);
-  char buffer[50];
-  tm r = {0};
-  strftime(buffer, sizeof(buffer), "%Y-%m-%d %X", localtime_r(&tv.tv_sec, &r));
-  char result[100] = {0};
-  std::sprintf(result, "%s.%06ld", buffer, (long)tv.tv_usec);
-  return result;
+    struct timeval tv;
+    gettimeofday(&tv, 0);
+    char buffer[50];
+    tm r = {0};
+    strftime(buffer, sizeof(buffer), "%Y-%m-%d %X", localtime_r(&tv.tv_sec, &r));
+    char result[100] = {0};
+    std::sprintf(result, "%s.%06ld", buffer, (long)tv.tv_usec);
+    return result;
 }
 
 template <typename T>
