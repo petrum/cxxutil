@@ -233,10 +233,31 @@ private:
     char* pData;
 };
 
+inline unsigned long long cpuid_rdtsc() {
+    unsigned int lo, hi;
+    asm volatile (
+     "cpuid \n"
+     "rdtsc"
+     : "=a"(lo), "=d"(hi) /* outputs */
+     : "a"(0)             /* inputs */
+     : "%ebx", "%ecx");     /* clobbers*/
+    return ((unsigned long long)lo) | (((unsigned long long)hi) << 32);
+}
+
 inline unsigned long long rdtsc() {
     unsigned int lo, hi;
     asm volatile (
      "rdtsc"
+     : "=a"(lo), "=d"(hi) /* outputs */
+     : "a"(0)             /* inputs */
+     : "%ebx", "%ecx");     /* clobbers*/
+    return ((unsigned long long)lo) | (((unsigned long long)hi) << 32);
+}
+
+inline unsigned long long rdtscp() {
+    unsigned int lo, hi;
+    asm volatile (
+     "rdtscp"
      : "=a"(lo), "=d"(hi) /* outputs */
      : "a"(0)             /* inputs */
      : "%ebx", "%ecx");     /* clobbers*/
