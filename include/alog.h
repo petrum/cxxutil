@@ -59,8 +59,6 @@ inline CircularQueue::CircularQueue(std::size_t max_row, std::size_t max_col) :
                      max_row_(max_row), max_col_(max_col), head_(0), tail_(max_col), len_(max_row * max_col), tail2_(next(tail_))
 {
   pData = (char*)malloc(len_);
-  //for (std::size_t i = 0; i != len_; ++i)
-  //    pData[i] = '?';
   FILE_LOG(logINFO) << "CircularQueue::CircularQueue(" << *this << ")";
 }
 
