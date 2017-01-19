@@ -145,7 +145,7 @@ inline char* doWrite(const char* pText, char* pData)
   return pData + c;
 }
 
-inline ALog::ALog() : stopping_(false), written(0), lost(0), read(0)
+inline ALog::ALog() : pQueue_(0), stopping_(false), written(0), lost(0), read(0)
 {
   FILE_LOG(logINFO) << "ALog::ALog()";
 }
@@ -161,6 +161,7 @@ inline void ALog::init(std::size_t max_row, std::size_t max_col, const std::stri
 inline ALog::~ALog()
 {
   stop();
+  delete pQueue_;
   FILE_LOG(logINFO) << "Log::~ALog(): written = " << written << ", lost = " << lost << 
     ", read = " << read << ", logged = " << written + lost;
 }
