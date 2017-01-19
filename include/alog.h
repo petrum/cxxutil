@@ -195,8 +195,10 @@ inline void ALog::consume()
         char* pData = pQueue_->getNextReadBuffer();
         if (pData)
         {
+            static unsigned long long last = 0;
             unsigned long long& dt = *reinterpret_cast<unsigned long long*>(pData);
-            FILE_LOG(logINFO) << "Consumer read: " << (void*)pData << ", dt = " << dt;
+            FILE_LOG(logINFO) << "Consumer read: " << (void*)pData << ", dt = " << dt << ", diff = " << dt - last;
+            last = dt;
             ++read;
         }
         if (i % 1000 == 0)
