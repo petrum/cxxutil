@@ -251,12 +251,8 @@ inline ALogMsg::ALogMsg()
         ++ALog::get().lost;
         return;
     }
-
     *reinterpret_cast<unsigned long long*>(pData) = rdtsc();
-    //*reinterpret_cast<unsigned long long*>(pData) = 0;
-    FILE_LOG(logDEBUG) << "ALogMsg::ALogMsg()1" << (void*)pData;
     pData += sizeof(unsigned long long);
-    FILE_LOG(logDEBUG) << "ALogMsg::ALogMsg()2" << (void*)pData;
 }
   
 inline ALogMsg::~ALogMsg()
