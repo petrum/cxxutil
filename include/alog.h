@@ -152,7 +152,7 @@ inline ALog::ALog() : pQueue_(0), stopping_(false), written(0), lost(0), read(0)
 
 inline void ALog::init(std::size_t max_row, std::size_t max_col, const std::string& fName)
 {
-  FILE_LOG(logINFO) << "ALog::init()";
+  FILE_LOG(logINFO) << "ALog::init('" << fName << "')";
   pQueue_ = new CircularQueue(max_row, max_col);
   fName_ = fName;
   consumer_ = std::thread(&ALog::consume, this);
