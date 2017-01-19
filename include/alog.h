@@ -246,7 +246,14 @@ inline unsigned long long rdtsc() {
 inline ALogMsg::ALogMsg()
 {
     pData = ALog::get().pQueue_->getNextWriteBuffer();
+    if (!pBuffer)
+    {
+        ++lost;
+        return;
+    }
+
     *reinterpret_cast<unsigned long long*>(pData) = rdtsc();
+    //*reinterpret_cast<unsigned long long*>(pData) = 0;
     FILE_LOG(logDEBUG) << "ALogMsg::ALogMsg()1" << (void*)pData;
     pData += sizeof(unsigned long long);
     FILE_LOG(logDEBUG) << "ALogMsg::ALogMsg()2" << (void*)pData;
@@ -254,18 +261,21 @@ inline ALogMsg::ALogMsg()
   
 inline ALogMsg::~ALogMsg()
 {
+    if (!pBuffer) return;
     ALog::get().pQueue_->writeComplete();
     ++ALog::get().written;
 }
 
 inline ALogMsg& ALogMsg::operator <<(int i)
 {
+    if (!pBuffer) return;
     pData += sizeof(int);
     return *this;
 }
 
 inline ALogMsg& ALogMsg::operator <<(unsigned int i)
 {
+    if (!pBuffer) return;
     *reinterpret_cast<int*>(pData) = 10;
     pData += sizeof(int);
     *reinterpret_cast<unsigned int*>(pData) = i;
@@ -275,6 +285,7 @@ inline ALogMsg& ALogMsg::operator <<(unsigned int i)
 
 inline ALogMsg& ALogMsg::operator <<(long unsigned int i)
 {
+    if (!pBuffer) return;
     *reinterpret_cast<int*>(pData) = 11;
     pData += sizeof(int);
     *reinterpret_cast<long unsigned int*>(pData) = i;
@@ -284,12 +295,14 @@ inline ALogMsg& ALogMsg::operator <<(long unsigned int i)
 
 inline ALogMsg& ALogMsg::operator <<(double)
 {
+    if (!pBuffer) return;
     pData += sizeof(double);
     return *this;
 }
 
 inline ALogMsg& ALogMsg::operator <<(const char*)
 {
+    if (!pBuffer) return;
     return *this;
 }
 
