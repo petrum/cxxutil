@@ -123,6 +123,7 @@ private:
     std::string fName_;
     std::atomic<bool> stopping_;
     std::size_t written, lost, read;
+    friend struct ALogMsg;
 };
 
 inline char* doWrite(long int i, char* pData)
@@ -231,20 +232,24 @@ private:
 
 inline ALogMsg::ALogMsg()
 {
-    pData = pQueue_->getNextWriteBuffer();
+    pData = ALog::get().pQueue_->getNextWriteBuffer();
 }
   
 inline ALogMsg::~ALogMsg()
 {
+    ALog::get().pQueue_->writeComplete();
+    ++ALog::get().written;
 }
 
 inline ALogMsg& ALogMsg::operator <<(int)
 {
+    pData += sizeof(int);
     return *this;
 }
 
 inline ALogMsg& ALogMsg::operator <<(double)
 {
+    pData += sizeof(double);
     return *this;
 }
 
