@@ -14,6 +14,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "filelog.h"
+#include <time.h>
 
 struct CircularQueue
 {
@@ -195,10 +196,14 @@ inline void ALog::consume()
         char* pData = pQueue_->getNextReadBuffer();
         if (pData)
         {
-            static unsigned long long last = 0;
-            unsigned long long& dt = *reinterpret_cast<unsigned long long*>(pData);
-            FILE_LOG(logINFO) << "Consumer read: " << (void*)pData << ", dt = " << dt << ", diff = " << dt - last;
-            last = dt;
+            timespec& dt = *reinterpret_cast<timespec*>(pData);
+            tm *pNow = localtime(&dt.tv_sec);
+
+            char buffer1[100] = {0};
+            ENFORCE(strftime(buffer1, sizeof(buffer1), "%F %T", pNow));
+            char buffer2[200] = {0};
+            ENFORCE(snprintf(buffer2, sizeof(buffer2), "%s.%09ld", buffer1, dt.tv_nsec));
+            FILE_LOG(logINFO) << "Consumer read: " << "dt = " << buffer2;
             ++read;
         }
         if (i % 1000 == 0)
@@ -235,14 +240,15 @@ private:
     char* pData;
 };
 
+/*
 inline unsigned long long cpuid_rdtsc() {
     unsigned int lo, hi;
     asm volatile (
      "cpuid \n"
      "rdtsc"
-     : "=a"(lo), "=d"(hi) /* outputs */
-     : "a"(0)             /* inputs */
-     : "%ebx", "%ecx");     /* clobbers*/
+     : "=a"(lo), "=d"(hi)
+     : "a"(0)
+     : "%ebx", "%ecx");
     return ((unsigned long long)lo) | (((unsigned long long)hi) << 32);
 }
 
@@ -250,9 +256,9 @@ inline unsigned long long rdtsc() {
     unsigned int lo, hi;
     asm volatile (
      "rdtsc"
-     : "=a"(lo), "=d"(hi) /* outputs */
-     : "a"(0)             /* inputs */
-     : "%ebx", "%ecx");     /* clobbers*/
+     : "=a"(lo), "=d"(hi)
+     : "a"(0)
+     : "%ebx", "%ecx");
     return ((unsigned long long)lo) | (((unsigned long long)hi) << 32);
 }
 
@@ -260,11 +266,12 @@ inline unsigned long long rdtscp() {
     unsigned int lo, hi;
     asm volatile (
      "rdtscp"
-     : "=a"(lo), "=d"(hi) /* outputs */
-     : "a"(0)             /* inputs */
-     : "%ebx", "%ecx");     /* clobbers*/
+     : "=a"(lo), "=d"(hi)
+     : "a"(0)
+     : "%ebx", "%ecx");
     return ((unsigned long long)lo) | (((unsigned long long)hi) << 32);
 }
+*/
 
 inline ALogMsg::ALogMsg()
 {
@@ -274,8 +281,11 @@ inline ALogMsg::ALogMsg()
         ++ALog::get().lost;
         return;
     }
-    *reinterpret_cast<unsigned long long*>(pData) = rdtscp();
-    pData += sizeof(unsigned long long);
+    //*reinterpret_cast<unsigned long long*>(pData) = rdtscp();
+    timespec dt;
+    ENFORCE(clock_gettime(CLOCK_REALTIME, &dt) != -1);
+    *reinterpret_cast<timespec*>(pData) = dt;
+    pData += sizeof(dt);
 }
   
 inline ALogMsg::~ALogMsg()
