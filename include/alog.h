@@ -3,6 +3,13 @@
  *                          petru.marginean@gmail.com                          *
  ******************************************************************************/
 
+/*
+Potential issues:
+  1. remove static (Meyers singleton etc)
+  2. potential false sharing (head/tail etc)
+  3. the consume keeps the pData warm in caches
+*/
+
 #ifndef __ALOG_H__
 #define __ALOG_H__
 
@@ -189,6 +196,7 @@ void ALog::write(const char* pText)
 
 inline void ALog::consume()
 {
+    STD_FUNCTION_BEGIN;
     std::ofstream ofs(fName_, std::ofstream::out);
     FILE_LOG(logINFO) << "ALog::consume() started";
     for(std::size_t i = 0; !(stopping_ && pQueue_->empty()); ++i)
@@ -196,19 +204,50 @@ inline void ALog::consume()
         char* pData = pQueue_->getNextReadBuffer();
         if (pData)
         {
+            std::ostringstream o;
             timespec& dt = *reinterpret_cast<timespec*>(pData);
             tm *pNow = localtime(&dt.tv_sec);
-
-            char buffer1[100] = {0};
-            ENFORCE(strftime(buffer1, sizeof(buffer1), "%F %T", pNow));
-            char buffer2[200] = {0};
-            ENFORCE(snprintf(buffer2, sizeof(buffer2), "%s.%09ld", buffer1, dt.tv_nsec));
-            FILE_LOG(logINFO) << "Consumer read: " << "dt = " << buffer2;
+            char buffer[100] = {0};
+            ENFORCE(strftime(buffer, sizeof(buffer), "%F %T", pNow));
+            o << buffer;
+            ENFORCE(snprintf(buffer, sizeof(buffer), ".%09ld: ", dt.tv_nsec));
+            o << buffer;
+            pData += sizeof(timespec);
+            for (char ch; ch = pData++[0], ch != 'z';)
+            {
+                switch (ch)
+                {
+                case 'i':
+                    o << *reinterpret_cast<int*>(pData);
+                    pData += sizeof(int);
+                    break;
+                case 'u':
+                    o << *reinterpret_cast<unsigned int*>(pData);
+                    pData += sizeof(unsigned int);
+                    break;
+                case 'd':
+                    o<< *reinterpret_cast<double*>(pData);
+                    pData += sizeof(double);
+                    break;
+                case 'l':
+                    o << *reinterpret_cast<long unsigned int*>(pData);
+                    pData += sizeof(long unsigned int);
+                    break;
+                case 's':
+                    o << pData;
+                    pData += strlen(pData) + 1;
+                    break;                
+                default:
+                    ENFORCE(false)("Found unexpected type '")(ch)("'");
+                 }
+            }
+            FILE_LOG(logINFO) << o.str();
             ++read;
         }
         if (i % 1000 == 0)
             usleep(1);
     }
+    STD_FUNCTION_END;
     FILE_LOG(logINFO) << "ALog::consume() exited";
 }
 
@@ -227,6 +266,12 @@ ALog& ALog::get()
     return log;
 }
 
+template <typename T, std::size_t N>
+    constexpr std::size_t countof(T const (&)[N]) noexcept
+{
+    return N;
+}
+
 struct ALogMsg
 {
     ALogMsg(); 
@@ -235,7 +280,26 @@ struct ALogMsg
     ALogMsg& operator <<(unsigned int);
     ALogMsg& operator <<(long unsigned int i);
     ALogMsg& operator <<(double);
-    ALogMsg& operator <<(const char*);
+
+    template <typename T>                                                                                                                   inline ALogMsg& operator <<(const T& t)
+    {
+        constexpr std::size_t N = countof(t);
+        if (!pData) return *this;
+        pData++[0] = 's';
+        memcpy(pData, t, N);
+        pData += N;
+        return *this;
+    }
+    
+    template <typename T>
+    inline ALogMsg& write(const T& t, char ch)
+    {
+        if (!pData) return *this;
+        pData++[0] = ch;
+        *reinterpret_cast<T*>(pData) = t;
+        pData += sizeof(T);
+        return *this;        
+    }
 private:
     char* pData;
 };
@@ -291,48 +355,29 @@ inline ALogMsg::ALogMsg()
 inline ALogMsg::~ALogMsg()
 {
     if (!pData) return;
+    pData[0] = 'z';
     ALog::get().pQueue_->writeComplete();
     ++ALog::get().written;
 }
 
 inline ALogMsg& ALogMsg::operator <<(int i)
 {
-    if (!pData) return *this;
-    pData += sizeof(int);
-    return *this;
+    return write(i, 'i');
 }
 
-inline ALogMsg& ALogMsg::operator <<(unsigned int i)
+inline ALogMsg& ALogMsg::operator <<(unsigned int u)
 {
-    if (!pData) return *this;
-    *reinterpret_cast<int*>(pData) = 10;
-    pData += sizeof(int);
-    *reinterpret_cast<unsigned int*>(pData) = i;
-    pData += sizeof(unsigned int);
-    return *this;
+    return write(u, 'u');
 }
 
-inline ALogMsg& ALogMsg::operator <<(long unsigned int i)
+inline ALogMsg& ALogMsg::operator <<(long unsigned int l)
 {
-    if (!pData) return *this;
-    *reinterpret_cast<int*>(pData) = 11;
-    pData += sizeof(int);
-    *reinterpret_cast<long unsigned int*>(pData) = i;
-    pData += sizeof(long unsigned int);
-    return *this;
+    return write(l, 'l');
 }
 
-inline ALogMsg& ALogMsg::operator <<(double)
+inline ALogMsg& ALogMsg::operator <<(double d)
 {
-    if (!pData) return *this;
-    pData += sizeof(double);
-    return *this;
-}
-
-inline ALogMsg& ALogMsg::operator <<(const char*)
-{
-    if (!pData) return *this;
-    return *this;
+    return write(d, 'd');
 }
 
 #endif //__ALOG_H__
