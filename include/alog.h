@@ -174,6 +174,7 @@ inline void ALog::consume()
 {
     STD_FUNCTION_BEGIN;
     FILE_LOG(logINFO) << "ALog::consume() started";
+    __syscall_slong_t last = 0;
     for(std::size_t i = 0; !(stopping_ && pQueue_->empty()); ++i)
     {
         char* pData = pQueue_->getNextReadBuffer();
@@ -216,6 +217,8 @@ inline void ALog::consume()
                     ENFORCE(false)("Found unexpected type '")(ch)("'");
                  }
             }
+            o << " (" << dt.tv_nsec - last << " nsec, read = " << read << ")";
+            last = dt.tv_nsec;
             FILE_LOG(logINFO) << o.str();
             ++read;
         }
@@ -254,12 +257,15 @@ struct ALogMsg
     ALogMsg& operator <<(unsigned int);
     ALogMsg& operator <<(long unsigned int i);
     ALogMsg& operator <<(double);
+    //ALogMsg& operator <<(const char*);
 
-    template <typename T>                                                                                                                   inline ALogMsg& operator <<(const T& t)
+    template <typename T>                                                                                                                   
+    inline ALogMsg& operator <<(const T& t)
     {
         constexpr std::size_t N = countof(t);
         if (!pData) return *this;
         pData++[0] = 's';
+        //pData++[0] = '#';
         memcpy(pData, t, N);
         pData += N;
         return *this;
@@ -353,7 +359,18 @@ inline ALogMsg& ALogMsg::operator <<(double d)
 {
     return write(d, 'd');
 }
-
+/*
+inline ALogMsg& ALogMsg::operator <<(const char* pText)
+{
+    if (!pData) return *this;
+    pData++[0] = 's';
+    pData++[0] = '~';
+    std::size_t len = strlen(pText) + 1;
+    memcpy(pData, pText, len);
+    pData += len;
+    return *this;
+}
+*/
 #define ALOG ALogMsg()
 
 #endif //__ALOG_H__
