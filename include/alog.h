@@ -5,7 +5,7 @@
 
 /*
 Potential issues:
-  1. remove static (Meyers singleton etc)
+  1. remove static (Meyers singleton etc): done
   2. potential false sharing (head/tail etc)
   3. the consume keeps the pData warm in caches
 */
@@ -52,14 +52,14 @@ inline std::size_t CircularQueue::next(std::size_t i) const
 {
     std::size_t n = i + max_col_;
     std::size_t res = n >= len_ ? 0 : n;
-    FILE_LOG(logDEBUG) << "CircularQueue::next(" << i << ") = " << res;
+    //FILE_LOG(logDEBUG) << "CircularQueue::next(" << i << ") = " << res;
     return res;
 }
 
 inline bool CircularQueue::empty() const
 {
     bool isEmpty = next(head_) == tail_;
-    FILE_LOG(logDEBUG) << "CircularQueue::empty() = " << isEmpty;
+    //FILE_LOG(logDEBUG) << "CircularQueue::empty() = " << isEmpty;
     return isEmpty;
 }
 
@@ -82,17 +82,16 @@ inline char* CircularQueue::getNextWriteBuffer()
     if (tail2_ == head_)
         //if (next(tail_) == head_)
     {
-        FILE_LOG(logDEBUG) << "Stop writing, CircularQueue::getNextWriteBuffer1(), tail = " << tail_ << ", head = " << head_;
+        //FILE_LOG(logDEBUG) << "Stop writing, CircularQueue::getNextWriteBuffer1(), tail = " << tail_ << ", head = " << head_;
         return 0; // overwriting...
     }
-    FILE_LOG(logDEBUG) << "CircularQueue::getNextWriteBuffer2() = " << (void*) &pData[tail_] << ", tail = " << tail_ << 
-        ", head = " << head_;
+    //FILE_LOG(logDEBUG) << "CircularQueue::getNextWriteBuffer2() = " << (void*) &pData[tail_] << ", tail = " << tail_ << ", head = " << head_;
     return &pData[tail_];
 }
 
 inline void CircularQueue::writeComplete()
 {
-    FILE_LOG(logDEBUG) << "CircularQueue::writeComplete()";
+    //FILE_LOG(logDEBUG) << "CircularQueue::writeComplete()";
     tail_ = tail2_;
     tail2_ = next(tail_);
     //tail_ = next(tail_);
@@ -103,13 +102,11 @@ inline char* CircularQueue::getNextReadBuffer()
     std::size_t n = next(head_);
     if (n == tail_)
     {
-        FILE_LOG(logDEBUG) << "Stop reading, CircularQueue::getNextReadBuffer1(), tail = " << tail_ << 
-            ", head = " << head_ << ", next = " << n;
+        //FILE_LOG(logDEBUG) << "Stop reading, CircularQueue::getNextReadBuffer1(), tail = " << tail_ << ", head = " << head_ << ", next = " << n;
         return 0;
     }
     head_ = n;
-    FILE_LOG(logDEBUG) << "CircularQueue::getNextReadBuffer2() = " << (void*) &pData[head_] << 
-        ", tail = " << tail_ << ", head = " << head_;
+    //FILE_LOG(logDEBUG) << "CircularQueue::getNextReadBuffer2() = " << (void*) &pData[head_] << ", tail = " << tail_ << ", head = " << head_;
     return &pData[head_];
 }
 
@@ -171,26 +168,6 @@ inline ALog::~ALog()
     delete pQueue_;
     FILE_LOG(logINFO) << "Log::~ALog() exit: written = " << written << ", lost = " << lost << 
         ", read = " << read << ", logged = " << written + lost;
-}
-
-inline void ALog::write(const char* pText)
-{
-    FILE_LOG(logDEBUG) << "ALog::write('" << pText << "')";
-    char* pBuffer = pQueue_->getNextWriteBuffer();
-    if (!pBuffer)
-    {
-        ++lost;
-        return;
-    }
-
-    timeval ts;
-    gettimeofday(&ts, 0);
-    pBuffer = doWrite(ts.tv_sec, pBuffer);
-    pBuffer = doWrite(ts.tv_usec, pBuffer);
-    pBuffer = doWrite(pText, pBuffer);
-
-    pQueue_->writeComplete();
-    ++written;
 }
 
 inline void ALog::consume()
