@@ -115,20 +115,20 @@ inline char* CircularQueue::getNextReadBuffer()
 
 struct ALog
 {
-    void init(std::size_t max_row, std::size_t max_col, const std::string& fName);
+    void init(std::size_t max_row, std::size_t max_col);
+    ALog();
     ~ALog();
 public:
     void write(const char*);
     static ALog& get();
+    static ALog* pALog;
     void stop();
 private:
-    ALog();
     ALog(const ALog&);
     void consume();
 private:
     CircularQueue* pQueue_;
     std::thread consumer_;
-    std::string fName_;
     std::atomic<bool> stopping_;
     std::size_t written, lost, read;
     friend struct ALogMsg;
@@ -157,11 +157,10 @@ inline ALog::ALog() : pQueue_(0), stopping_(false), written(0), lost(0), read(0)
     FILE_LOG(logINFO) << "ALog::ALog()";
 }
 
-inline void ALog::init(std::size_t max_row, std::size_t max_col, const std::string& fName)
+inline void ALog::init(std::size_t max_row, std::size_t max_col)
 {
-    FILE_LOG(logINFO) << "ALog::init('" << fName << "')";
+    FILE_LOG(logINFO) << "ALog::init(" << max_row << ", " << max_col << ")";
     pQueue_ = new CircularQueue(max_row, max_col);
-    fName_ = fName;
     consumer_ = std::thread(&ALog::consume, this);
 }
 
@@ -174,7 +173,7 @@ inline ALog::~ALog()
         ", read = " << read << ", logged = " << written + lost;
 }
 
-void ALog::write(const char* pText)
+inline void ALog::write(const char* pText)
 {
     FILE_LOG(logDEBUG) << "ALog::write('" << pText << "')";
     char* pBuffer = pQueue_->getNextWriteBuffer();
@@ -197,7 +196,6 @@ void ALog::write(const char* pText)
 inline void ALog::consume()
 {
     STD_FUNCTION_BEGIN;
-    std::ofstream ofs(fName_, std::ofstream::out);
     FILE_LOG(logINFO) << "ALog::consume() started";
     for(std::size_t i = 0; !(stopping_ && pQueue_->empty()); ++i)
     {
@@ -251,7 +249,7 @@ inline void ALog::consume()
     FILE_LOG(logINFO) << "ALog::consume() exited";
 }
 
-void ALog::stop()
+inline void ALog::stop()
 {
     FILE_LOG(logINFO) << "ALog::stop() enter";
     stopping_ = true;
@@ -260,10 +258,9 @@ void ALog::stop()
     FILE_LOG(logINFO) << "ALog::stop() exit";
 }
 
-ALog& ALog::get()
+inline ALog& ALog::get()
 {
-    static ALog log;
-    return log;
+    return *pALog;
 }
 
 template <typename T, std::size_t N>
