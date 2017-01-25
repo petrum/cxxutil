@@ -22,10 +22,12 @@ Potential issues:
 #include <stdlib.h>
 #include "filelog.h"
 #include <time.h>
+#include <sys/mman.h>
+#include <stdio.h>
 
 struct CircularQueue
 {
-    CircularQueue(std::size_t max_row, std::size_t max_col);
+    CircularQueue(bool mmap, std::size_t max_row, std::size_t max_col);
     ~CircularQueue();
     std::size_t next(std::size_t) const;
 public: // producer
@@ -36,15 +38,18 @@ public: //consumer
     void readComplete();
     bool empty() const;
 private:
+    bool usemmap;
     std::atomic<std::size_t> max_row_, max_col_, head_, tail_, len_;
     std::size_t tail2_;
+    std::string fname;
     char *pData;
+    FILE* fp;
     friend std::ostream& operator <<(std::ostream& o, const CircularQueue& q);
 };
 
 inline std::ostream& operator <<(std::ostream& o, const CircularQueue& q)
 {
-    return o << "max_row = " << q.max_row_ << ", max_col = " << q.max_col_ << 
+    return o << "usemmap = " << q.usemmap << ", max_row = " << q.max_row_ << ", max_col = " << q.max_col_ << 
         ", head = " << q.head_ << ", tail = " << q.tail_ << ", tail2 = " << q.tail2_ << ", len = " << q.len_;
 }
 
@@ -63,24 +68,66 @@ inline bool CircularQueue::empty() const
     return isEmpty;
 }
 
-inline CircularQueue::CircularQueue(std::size_t max_row, std::size_t max_col) : 
+inline CircularQueue::CircularQueue(bool m, std::size_t max_row, std::size_t max_col) : usemmap(m), 
                      max_row_(max_row), max_col_(max_col), head_(0), tail_(max_col), len_(max_row * max_col), tail2_(next(tail_))
 {
-    pData = (char*)malloc(len_);
+    if (usemmap)
+    {
+        std::ostringstream o;
+        o << getenv("HOME") << "/log/alog-" << getpid() << ".log";
+        //o << "/tmp/alog-" << getpid() << ".log";
+        fname = o.str();
+        FILE_LOG(logINFO) << "Use mmap() with the '" << fname << "' file";
+        fp = ENFORCE(fopen(o.str().c_str(), "w+"));
+        ENFORCE(ftruncate(fileno(fp), max_row * max_col) == 0);
+        
+        
+        
+        pData = (char*)mmap(0, max_row * max_col, PROT_READ|PROT_WRITE, MAP_SHARED, fileno(fp), 0);
+    }
+    else
+    {
+        FILE_LOG(logINFO) << "Use malloc()";
+        pData = (char*)ENFORCE(malloc(len_));
+    }
     FILE_LOG(logINFO) << "CircularQueue::CircularQueue(" << *this << ")";
 }
 
 inline CircularQueue::~CircularQueue()
 {
     FILE_LOG(logINFO) << "CircularQueue::~CircularQueue()";
-    free(pData);
+    if (usemmap)
+    {
+        FILE_LOG(logINFO) << "munmap()";
+        int ret = munmap(pData, max_row_ * max_col_);
+        if (ret != 0)
+        {
+            FILE_LOG(logERROR) << "munmap() has failed returning " << ret;
+        }
+        FILE_LOG(logINFO) << "fclose()";
+        ret = fclose(fp);
+        if (ret != 0)
+        {
+            FILE_LOG(logERROR) << "fclose() has failed returning " << ret;
+        }
+        FILE_LOG(logINFO) << "remove('" << fname << "')";
+        ret = remove(fname.c_str());
+        if (ret != 0)
+        {
+            FILE_LOG(logERROR) << "remove() has failed returning " << ret;
+        }
+    }
+    else
+    {
+        free(pData);
+    }
     pData = 0;
 }
 
 inline char* CircularQueue::getNextWriteBuffer()
 {    
     if (tail2_ == head_)
-        //if (next(tail_) == head_)
+    //if (next(tail_) == head_)
     {
         //FILE_LOG(logDEBUG) << "Stop writing, CircularQueue::getNextWriteBuffer1(), tail = " << tail_ << ", head = " << head_;
         return 0; // overwriting...
@@ -112,7 +159,7 @@ inline char* CircularQueue::getNextReadBuffer()
 
 struct ALog
 {
-    void init(std::size_t max_row, std::size_t max_col);
+    void init(std::size_t max_row, std::size_t max_col, bool mmap = false);
     ALog();
     ~ALog();
 public:
@@ -154,10 +201,10 @@ inline ALog::ALog() : pQueue_(0), stopping_(false), written(0), lost(0), read(0)
     FILE_LOG(logINFO) << "ALog::ALog()";
 }
 
-inline void ALog::init(std::size_t max_row, std::size_t max_col)
+inline void ALog::init(std::size_t max_row, std::size_t max_col, bool mmap)
 {
     FILE_LOG(logINFO) << "ALog::init(" << max_row << ", " << max_col << ")";
-    pQueue_ = new CircularQueue(max_row, max_col);
+    pQueue_ = new CircularQueue(mmap, max_row, max_col);
     consumer_ = std::thread(&ALog::consume, this);
 }
 
