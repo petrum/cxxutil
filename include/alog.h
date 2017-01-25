@@ -118,7 +118,7 @@ struct ALog
 public:
     void write(const char*);
     static ALog& get();
-    static ALog* pALog;
+    static ALog* const pALog;
     void stop();
 private:
     ALog(const ALog&);
