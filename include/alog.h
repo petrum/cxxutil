@@ -380,4 +380,6 @@ inline ALogMsg& ALogMsg::operator <<(double d)
     return write(d, 'd');
 }
 
+#define ALOG ALogMsg()
+
 #endif //__ALOG_H__
