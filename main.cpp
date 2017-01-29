@@ -22,8 +22,8 @@ int main(int argc, char* argv[])
     FILE_LOG(logINFO) << "Started logging " << NUM << " messages";
     for (std::size_t i = 0; i != NUM; ++i)
     {
-        ALogMsg() << "Hello" << " World " << 3.2 << " blabla " << i;
-        ALogMsg() << "Hello" << " World " << 3.2 << " xuku";
+        ALOG << "Hello" << " World " << 3.2 << " blabla " << i;
+        ALOG << "Hello" << " World " << 3.2 << " xuku";
         usleep(1);
     }
     FILE_LOG(logINFO) << "Finishing logging " << NUM << " messages";
