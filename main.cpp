@@ -9,6 +9,9 @@ bool foo(bool b)
     return b;
 }
 
+ALog aLog;
+ALog* const ALog::pALog = &aLog;
+
 int main(int argc, char* argv[])
 {
     STD_FUNCTION_BEGIN;
