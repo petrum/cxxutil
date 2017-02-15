@@ -26,7 +26,7 @@ void setaffinity(int i)
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
     CPU_SET(i, &cpuset);
-    ENFORCE(pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) == 0);    
+    ENFORCE(pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) == 0);
 }
 
 ALog aLog;
@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
         ALOG << "Hello2" << " World " << 3.2 << " blabla " << i;
         usleep(1000000);
     }
-    FILE_LOG(logINFO) << "Finishing logging " << NUM << " messages";    
+    FILE_LOG(logINFO) << "Finishing logging " << NUM << " messages";
     ENFORCE(foo(false))("Some issue here passing ")(false);
     return 0;
     STD_FUNCTION_END;
