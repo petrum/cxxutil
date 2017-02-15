@@ -21,15 +21,24 @@ bool foo(bool b)
     return b;
 }
 
+void setaffinity(int i)
+{
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(i, &cpuset);
+    ENFORCE(pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset) == 0);    
+}
+
 ALog aLog;
 ALog* const ALog::pALog = &aLog;
 
 int main(int argc, char* argv[])
 {
     STD_FUNCTION_BEGIN;
-    //accelerate();
     SCOPE_EXIT(foo(true));
     ALog::get().init(1000000, 256, "/tmp/test.log");
+    setaffinity(11);
+    accelerate();
     SCOPE_EXIT(ALog::get().stop());
     std::size_t NUM = 10;
     usleep(1 * 1000000);
@@ -42,7 +51,7 @@ int main(int argc, char* argv[])
     {
         ALOG << "Hello1" << " World " << 3.2 << " blabla " << i;
         ALOG << "Hello2" << " World " << 3.2 << " blabla " << i;
-        usleep(1);
+        usleep(1000000);
     }
     FILE_LOG(logINFO) << "Finishing logging " << NUM << " messages";    
     ENFORCE(foo(false))("Some issue here passing ")(false);
