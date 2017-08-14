@@ -7,7 +7,6 @@
 #define __FILELOG_H__
 
 #include "log.h"
-#include "enforce.h"
 #include <stdio.h>
 
 class Output2FILE

@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <cstdio>
+#include "enforce.h"
 
 enum TLogLevel {logERROR, logWARNING, logINFO, logDEBUG, logDEBUG1, logDEBUG2, logDEBUG3, 
                 logDEBUG4, logDEBUG5, logDEBUG6, logALL};
