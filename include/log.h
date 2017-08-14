@@ -12,7 +12,8 @@
 #include <sys/time.h>
 #include <cstdio>
 
-enum TLogLevel {logERROR, logWARNING, logINFO, logDEBUG};
+enum TLogLevel {logERROR, logWARNING, logINFO, logDEBUG, logDEBUG1, logDEBUG2, logDEBUG3, 
+                logDEBUG4, logDEBUG5, logDEBUG6, logALL};
 
 template <typename T>
 class Log
@@ -55,6 +56,20 @@ inline TLogLevel FromString(const std::string& level)
         return logINFO;
     if (level == "DEBUG")
         return logDEBUG;
+    if (level == "DEBUG1")
+        return logDEBUG1;
+    if (level == "DEBUG2")
+        return logDEBUG2;
+    if (level == "DEBUG3")
+        return logDEBUG3;
+    if (level == "DEBUG4")
+        return logDEBUG4;
+    if (level == "DEBUG5")
+        return logDEBUG5;
+    if (level == "DEBUG6")
+        return logDEBUG6;
+    if (level == "ALL")
+        return logALL;
     return logINFO;
 }
 
@@ -82,7 +97,8 @@ void Log<T>::SetReportingLevel(const std::string& s)
 
 inline const char* const LogToString(TLogLevel level)
 {
-    static const char* const  buffer[] = {"ERROR", "WARNING", "INFO", "DEBUG"};
+    static const char* const  buffer[] = {"ERROR", "WARNING", "INFO", "DEBUG", "DEBUG1", "DEBUG2", 
+                                          "DEBUG3", "DEBUG4", "DEBUG5", "DEBUG6", "ALL"};
     return buffer[level];
 }
 
